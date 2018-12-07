@@ -91,13 +91,14 @@ def dnsbl_qry(blacklist):
         print(colored.red(f" [*] POSITIVE HIT: {QRY} --> {blacklist} {answers[0]} {answer_txt[0]}"))
 
     except dns.resolver.NXDOMAIN:
-        pass
-    except dns.resolver.Timeout:
-        print(colored.yellow(f' [-] WARNING: Timeout querying {blacklist}'))
+        print(NXDOMAIN)
+        # pass
+    # except dns.resolver.Timeout:
+        # print(colored.yellow(f' [-] WARNING: Timeout querying {blacklist}'))
     except dns.resolver.NoNameservers:
         print(colored.yellow(f' [-] WARNING: No name servers for {blacklist}'))
     except dns.resolver.NoAnswer:
-        print(colored.yellow(f' [-] WARNING: No answer for {blacklist}'))
+        print(colored.yellow(f' [-] WARNING: No answer from {blacklist}'))
 
 
 def main():
