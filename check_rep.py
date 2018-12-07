@@ -65,6 +65,8 @@ def blklst_qry(blacklist):
         match = re.findall(QRY, req.text)
         if match:
             print(colored.red(f" [*] POSITIVE HIT: {QRY} --> {blacklist}"))
+        else:
+            print(colored.green(f" [*] NEGATIVE: {QRY} --> {blacklist}"))
 
     except requests.exceptions.Timeout:
         print(colored.yellow(f" [-] WARNING: Timeout exceeded for {blacklist}"))
