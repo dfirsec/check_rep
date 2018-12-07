@@ -1,5 +1,3 @@
-concurrent.futures
-functools
 dnspython
 requests
 clint
