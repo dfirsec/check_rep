@@ -67,8 +67,7 @@ def blklst_qry(blacklist):
             print(colored.red(f" [*] POSITIVE HIT: {QRY} --> {blacklist}"))
 
     except requests.exceptions.Timeout:
-        print(colored.yellow(
-            f" [-] WARNING: Timeout exceeded for {blacklist}"))
+        print(colored.yellow(f" [-] WARNING: Timeout exceeded for {blacklist}"))
     except requests.exceptions.HTTPError as err:
         print(colored.yellow(f" [-] WARNING: {err}"))
     except requests.exceptions.ConnectionError as err:
