@@ -59,7 +59,9 @@ def geolite_check():
     if not os.path.exists(gl_file):
         print("-" * 80)
         logger.warning(f"[-] {gl_file} does not exist.")
-        geoip_download = input("\n[+] Would you like to download the GeoLite2-City file (yes/no)? ")
+        geoip_download = input(
+            "\n[+] Would you like to download the GeoLite2-City file (yes/no)? "
+        )
         if geoip_download.lower() == "yes":
             os.chdir(geomap_root)
             helpers.download_file(url)
@@ -86,7 +88,9 @@ def map_maxmind(QRY):
         logger.warning(f"[-] Address {QRY} is not in the geoip database.")
     except FileNotFoundError:
         logger.info("\n[*] Please download the GeoLite2-City database file: ")
-        print("    --> https://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz")
+        print(
+            "    --> https://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz"
+        )
         time.sleep(2)
 
 

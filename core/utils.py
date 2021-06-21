@@ -44,7 +44,9 @@ class Helpers:
         pattern = dict(
             ip_addr=r"(^(\d{1,3}\.){0,3}\d{1,3}$)",
             ip_net=r"(^(\d{1,3}\.){0,3}\d{1,3}/\d{1,2}$)",
-            domain=r"([A-Za-z0-9]+(?:[\-|\.][A-Za-z0-9]+)*(?:\[\.\]|\.)(?:{}))".format(tlds),
+            domain=r"([A-Za-z0-9]+(?:[\-|\.][A-Za-z0-9]+)*(?:\[\.\]|\.)(?:{}))".format(
+                tlds
+            ),
             email=r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]{2,5}$)",
             url=r"(http[s]?:\/\/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)",
         )
@@ -80,7 +82,11 @@ class Helpers:
             resp = requests.get(url, local_file, stream=True)
             size = int(resp.headers["content-length"])
             pbar = tqdm(
-                iterable=resp.iter_content(chunk_size=1024), total=size, unit="B", unit_scale=True, unit_divisor=1024
+                iterable=resp.iter_content(chunk_size=1024),
+                total=size,
+                unit="B",
+                unit_scale=True,
+                unit_divisor=1024,
             )
             if resp.status_code == 403:
                 logger.info(responses[403])
@@ -149,19 +155,30 @@ class Workers:
             resolver.lifetime = 3
             qry = ""
             if helpers.regex(_type="ip_addr").findall(self.query):
-                qry = ip_address(host).reverse_pointer.strip(".in-addr.arpa") + "." + blacklist
+                qry = (
+                    ip_address(host).reverse_pointer.strip(".in-addr.arpa")
+                    + "."
+                    + blacklist
+                )
             elif helpers.regex(_type="domain").findall(self.query):
                 qry = ".".join(str(host).split(".")) + "." + blacklist
             answer = resolver.query(qry, "A")
             if any(str(answer[0]) in s for s in codes):
                 logger.info(f"\u2716  {self.query} --> {blacklist}")
                 self.DNSBL_MATCHES += 1
-        except (dns.resolver.NXDOMAIN, dns.resolver.Timeout, dns.resolver.NoNameservers, dns.resolver.NoAnswer):
+        except (
+            dns.resolver.NXDOMAIN,
+            dns.resolver.Timeout,
+            dns.resolver.NoNameservers,
+            dns.resolver.NoAnswer,
+        ):
             pass
 
     def dnsbl_mapper(self):
         with ThreadPoolExecutor(max_workers=50) as executor:
-            dnsbl_map = {executor.submit(self.dnsbl_query, url): url for url in DNSBL_LISTS}
+            dnsbl_map = {
+                executor.submit(self.dnsbl_query, url): url for url in DNSBL_LISTS
+            }
             for future in as_completed(dnsbl_map):
                 future.result()
 
@@ -169,7 +186,7 @@ class Workers:
         self.dnsbl_query(SPAMHAUS_IP)
 
     def spamhaus_dbl_worker(self):
-       self.dnsbl_query(SPAMHAUS_DOM)
+        self.dnsbl_query(SPAMHAUS_DOM)
 
     # ---[ Query Blacklists ]---
     def bl_mapper(self, query_type, list_type, list_name):
@@ -203,17 +220,29 @@ class Workers:
         self.blacklist_worker(blacklist)
 
     def blacklist_dbl_worker(self):
-        self.bl_mapper(query_type=self.blacklist_query, list_type=DOM_LISTS, list_name="Domain Blacklists")
+        self.bl_mapper(
+            query_type=self.blacklist_query,
+            list_type=DOM_LISTS,
+            list_name="Domain Blacklists",
+        )
 
     def blacklist_ipbl_worker(self):
-        self.bl_mapper(query_type=self.blacklist_query, list_type=IP_LISTS, list_name="IP Blacklists")
+        self.bl_mapper(
+            query_type=self.blacklist_query,
+            list_type=IP_LISTS,
+            list_name="IP Blacklists",
+        )
 
     # ----[ IP BLOCKS SECTION ]---
     def blacklist_ipblock_query(self, blacklist):
         self.blacklist_worker(blacklist)
 
     def blacklist_netblock_worker(self):
-        self.bl_mapper(query_type=self.blacklist_ipblock_query, list_type=IP_BLOCKS, list_name="NetBlock Blacklists")
+        self.bl_mapper(
+            query_type=self.blacklist_ipblock_query,
+            list_type=IP_BLOCKS,
+            list_name="NetBlock Blacklists",
+        )
 
     # ----[ WHOIS SECTION ]---
     def whois_query(self, QRY):
@@ -277,7 +306,12 @@ class Workers:
             resolver.timeout = 1
             resolver.lifetime = 1
             answer = resolver.query(cymru, "A")
-        except (dns.resolver.NXDOMAIN, dns.resolver.Timeout, dns.resolver.NoNameservers, dns.resolver.NoAnswer):
+        except (
+            dns.resolver.NXDOMAIN,
+            dns.resolver.Timeout,
+            dns.resolver.NoNameservers,
+            dns.resolver.NoAnswer,
+        ):
             pass
         else:
             if answer:

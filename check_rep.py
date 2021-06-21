@@ -70,8 +70,15 @@ def main():
     optional.add_argument("--vt", action="store_true", help="check virustotal")
 
     group = optional.add_mutually_exclusive_group()
-    group.add_argument("--fg", action="store_true", help="use freegeoip for geolocation")
-    group.add_argument("--mx", nargs="+", metavar="FILE", help="geolocate multiple ip addresses or domains")
+    group.add_argument(
+        "--fg", action="store_true", help="use freegeoip for geolocation"
+    )
+    group.add_argument(
+        "--mx",
+        nargs="+",
+        metavar="FILE",
+        help="geolocate multiple ip addresses or domains",
+    )
 
     parser._action_groups.append(optional)
     args = parser.parse_args()
@@ -92,7 +99,9 @@ def main():
         dt_stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
         file_log = logging.FileHandler(f"logfile/logfile_{dt_stamp}.txt")
         file_log.setFormatter(
-            logging.Formatter("[%(asctime)s %(levelname)s] %(message)s", datefmt="%m/%d/%Y %I:%M:%S")
+            logging.Formatter(
+                "[%(asctime)s %(levelname)s] %(message)s", datefmt="%m/%d/%Y %I:%M:%S"
+            )
         )
         logger.addHandler(file_log)
 
@@ -100,7 +109,11 @@ def main():
         map_free_geo(QRY)
 
     if args.mx:
-        print(colored.stylize("\n--[ Processing Geolocation Map ]--", colored.attr("bold")))
+        print(
+            colored.stylize(
+                "\n--[ Processing Geolocation Map ]--", colored.attr("bold")
+            )
+        )
         multi_map(input_file=args.mx[0])
         print(colored.stylize("\n--[ GeoIP Map File ]--", colored.attr("bold")))
         try:
@@ -114,7 +127,9 @@ def main():
     if args.vt:
         print(colored.stylize("\n--[ VirusTotal Detections ]--", colored.attr("bold")))
         if not config["VIRUS-TOTAL"]["api_key"]:
-            logger.warning("Please add VirusTotal API key to the 'settings.yml' file, or add it below")
+            logger.warning(
+                "Please add VirusTotal API key to the 'settings.yml' file, or add it below"
+            )
             user_vt_key = input("Enter key: ")
             config["VIRUS-TOTAL"]["api_key"] = user_vt_key
 
@@ -131,12 +146,18 @@ def main():
             virustotal.vt_run("urls", QRY)
         else:
             virustotal.vt_run("files", QRY)
-            print(colored.stylize("\n--[ Team Cymru Detection ]--", colored.attr("bold")))
+            print(
+                colored.stylize("\n--[ Team Cymru Detection ]--", colored.attr("bold"))
+            )
             workers.tc_query(qry=QRY)
             sys.exit("\n")
 
     if DOMAIN.findall(QRY) and not EMAIL.findall(QRY):
-        print(colored.stylize("\n--[ Querying Domain Blacklists ]--", colored.attr("bold")))
+        print(
+            colored.stylize(
+                "\n--[ Querying Domain Blacklists ]--", colored.attr("bold")
+            )
+        )
         workers.spamhaus_dbl_worker()
         workers.blacklist_dbl_worker()
         print(colored.stylize(f"\n--[ WHOIS for {QRY} ]--", colored.attr("bold")))
@@ -157,11 +178,17 @@ def main():
         workers.blacklist_ipbl_worker()
 
     elif NET.findall(QRY):
-        print(colored.stylize("\n--[ Querying NetBlock Blacklists ]--", colored.attr("bold")))
+        print(
+            colored.stylize(
+                "\n--[ Querying NetBlock Blacklists ]--", colored.attr("bold")
+            )
+        )
         workers.blacklist_netblock_worker()
 
     else:
-        print(f"{Fore.YELLOW}[!] Please enter a valid query -- Domain or IP address{Style.RESET_ALL}")
+        print(
+            f"{Fore.YELLOW}[!] Please enter a valid query -- Domain or IP address{Style.RESET_ALL}"
+        )
         print("=" * 60, "\n")
         parser.print_help()
         parser.exit()
@@ -175,8 +202,12 @@ def main():
     else:
         _QRY = Fore.YELLOW + QRY + Style.BRIGHT + Style.RESET_ALL
         _DNSBL_MATCHES = f"{Fore.WHITE}{Back.RED}{str(workers.DNSBL_MATCHES)}{Style.BRIGHT}{Style.RESET_ALL}"
-        _BL_TOTALS = f"{Fore.WHITE}{Back.RED}{str(BL_TOTALS)}{Style.BRIGHT}{Style.RESET_ALL}"
-        logger.info(f"> {_QRY} is listed in {_DNSBL_MATCHES} DNSBL lists and {_BL_TOTALS} Blacklists\n")
+        _BL_TOTALS = (
+            f"{Fore.WHITE}{Back.RED}{str(BL_TOTALS)}{Style.BRIGHT}{Style.RESET_ALL}"
+        )
+        logger.info(
+            f"> {_QRY} is listed in {_DNSBL_MATCHES} DNSBL lists and {_BL_TOTALS} Blacklists\n"
+        )
 
     # ---[ Geo Map output ]-------------------------------
     if args.fg or args.mx:

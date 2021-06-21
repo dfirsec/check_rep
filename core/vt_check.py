@@ -37,7 +37,9 @@ class VirusTotalChk:
             if resp.status_code == 401:
                 sys.exit("[error] Verify that you have provided a valid API key.")
             if resp.status_code != 200:
-                print(f"[error] {resp.status_code} {responses[resp.status_code]}")  # nopep8
+                print(
+                    f"[error] {resp.status_code} {responses[resp.status_code]}"
+                )  # nopep8
             else:
                 return resp.json()
 
@@ -62,6 +64,8 @@ class VirusTotalChk:
                     else:
                         good += 1
                 if bad == 0:
-                    logger.success(f"\u2714 {good} engines deemed '{QRY}' as harmless\n")  # nopep8
+                    logger.success(
+                        f"\u2714 {good} engines deemed '{QRY}' as harmless\n"
+                    )  # nopep8
                 else:
                     logger.info(f"{bad} engines deemed '{QRY}' as malicious\n")
