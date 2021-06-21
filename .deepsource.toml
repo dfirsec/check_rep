@@ -1,0 +1,13 @@
+version = 1
+
+[[analyzers]]
+name = "python"
+enabled = true
+
+[[transformers]]
+name = "black"
+enabled = true
+
+[[transformers]]
+name = "isort"
+enabled = true
