@@ -1,6 +1,6 @@
 # Check Reputation
 
-[![DeepSource](https://deepsource.io/gh/dfirsec/check_rep.svg/?label=active+issues&show_trend=true&token=ms5ij6GLKk3OLYFOOL6LJYZk)](https://deepsource.io/gh/dfirsec/check_rep/?ref=repository-badge) ![Generic badge](https://img.shields.io/badge/python-3.7-blue.svg) [![Twitter](https://img.shields.io/badge/Twitter-@pulsecode-blue.svg)](https://twitter.com/pulsecode)
+![Generic badge](https://img.shields.io/badge/python-3.7-blue.svg) [![Twitter](https://img.shields.io/badge/Twitter-@pulsecode-blue.svg)](https://twitter.com/pulsecode)
 
 `check_rep.py` Check IP or Domain reputation against 400+ open-source Blacklists.  Utilizes asynchronous execution with [threads](https://docs.python.org/3/library/concurrent.futures.html) for faster querying.
 
