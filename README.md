@@ -6,7 +6,7 @@ Check IP or Domain reputation against several open-source Blacklists.
 
 Option to create a Geolocation map file using coordinates derived from [freegeoip.live](https://freegeoip.live).
 
-**Note:**
+*Note:*
 Use of VirusTotal option requires an API key.  The service is free, however you must register for an account to aquire an API key.
 
 ```console
