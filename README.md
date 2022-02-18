@@ -41,10 +41,9 @@ optional arguments:
     Use of the VirusTotal option requires an API key.
     The service is "free" to use, however you must register
     for an account to receive an API key.
-``` 
+```
 
-
-# Installation
+## Installation
 
 ```text
 git clone https://github.com/dfirsec/check_rep.git
@@ -52,10 +51,10 @@ cd check_rep
 pip install -r requirements.txt
 ```
 
-## Example Run
+### Example Run
 
 [![asciicast](https://asciinema.org/a/r6VDD8QaHsaj3Fzo1wjU96BmQ.svg)](https://asciinema.org/a/r6VDD8QaHsaj3Fzo1wjU96BmQ)
 
-## Geolocation Map File
+### Geolocation Map File
 
 ![alt text](images/geo_ip_map_example.png)

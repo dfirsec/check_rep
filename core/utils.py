@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import pathlib
 import random
@@ -8,15 +9,14 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.client import responses
 from ipaddress import AddressValueError, IPv4Address, IPv4Network, ip_address
 
+import asyncwhois
 import coloredlogs
 import dns.resolver
 import requests
 import verboselogs
-import whois
 from tqdm import tqdm
 
-from core.feeds import (CFLARE_IPS, DNSBL_LISTS, DOM_LISTS, IP_BLOCKS,
-                        IP_LISTS, SPAMHAUS_DOM, SPAMHAUS_IP)
+from core.feeds import CFLARE_IPS, DNSBL_LISTS, DOM_LISTS, IP_BLOCKS, IP_LISTS, SPAMHAUS_DOM, SPAMHAUS_IP
 
 logger = verboselogs.VerboseLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -39,12 +39,12 @@ class Helpers:
     def regex(_type):
         # ref: http://data.iana.org/TLD/tlds-alpha-by-domain.txt
         dir_path = pathlib.Path(__file__).parent
-        with open(dir_path / "tlds.txt", "r") as f:
-            tlds = f.read()
+        with open(dir_path / "tlds.txt", encoding="utf-8") as file_obj:
+            tlds = file_obj.read()
         pattern = dict(
             ip_addr=r"(^(\d{1,3}\.){0,3}\d{1,3}$)",
             ip_net=r"(^(\d{1,3}\.){0,3}\d{1,3}/\d{1,2}$)",
-            domain=r"([A-Za-z0-9]+(?:[\-|\.][A-Za-z0-9]+)*(?:\[\.\]|\.)(?:{}))".format(tlds),
+            domain=fr"([A-Za-z0-9]+(?:[\-|\.][A-Za-z0-9]+)*(?:\[\.\]|\.)(?:{tlds}))",
             email=r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]{2,5}$)",
             url=r"(http[s]?:\/\/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)",
         )
@@ -86,9 +86,9 @@ class Helpers:
                 logger.info(responses[403])
                 sys.exit()
             elif resp.status_code == 200:
-                with open(local_file, "wb") as f:
+                with open(local_file, "wb") as file_obj:
                     for data in pbar:
-                        f.write(data)
+                        file_obj.write(data)
                         pbar.update(len(data))
             else:
                 logger.info((resp.status_code, responses[resp.status_code]))
@@ -113,10 +113,10 @@ EMAIL = helpers.regex(_type="email")
 
 
 class Workers:
-    def __init__(self, QRY):
-        self.query = QRY
-        self.DNSBL_MATCHES = 0
-        self.BL_MATCHES = 0
+    def __init__(self, qry):
+        self.query = qry
+        self.dnsbl_matches = 0
+        self.bl_matches = 0
 
     # ---[ Query DNSBL Lists ]---
     def dnsbl_query(self, blacklist):
@@ -144,18 +144,21 @@ class Workers:
         ]
 
         try:
+            resolver = dns.resolver.Resolver(configure=False)
+            resolver.nameservers = ["8.8.8.8", "1.1.1.1", "9.9.9.9"]
             resolver = dns.resolver.Resolver()
-            resolver.timeout = 3
-            resolver.lifetime = 3
             qry = ""
             if helpers.regex(_type="ip_addr").findall(self.query):
-                qry = ip_address(host).reverse_pointer.strip(".in-addr.arpa") + "." + blacklist
+                try:
+                    qry = ip_address(host).reverse_pointer.strip(".in-addr.arpa") + "." + blacklist
+                except ValueError:
+                    sys.exit(f"{host} is not a valid IP address")
             elif helpers.regex(_type="domain").findall(self.query):
                 qry = ".".join(str(host).split(".")) + "." + blacklist
             answer = resolver.query(qry, "A")
             if any(str(answer[0]) in s for s in codes):
                 logger.info(f"\u2716  {self.query} --> {blacklist}")
-                self.DNSBL_MATCHES += 1
+                self.dnsbl_matches += 1
         except (dns.resolver.NXDOMAIN, dns.resolver.Timeout, dns.resolver.NoNameservers, dns.resolver.NoAnswer):
             pass
 
@@ -169,15 +172,15 @@ class Workers:
         self.dnsbl_query(SPAMHAUS_IP)
 
     def spamhaus_dbl_worker(self):
-       self.dnsbl_query(SPAMHAUS_DOM)
+        self.dnsbl_query(SPAMHAUS_DOM)
 
-    # ---[ Query Blacklists ]---
     def bl_mapper(self, query_type, list_type, list_name):
+        """Query Blacklists."""
         with ThreadPoolExecutor(max_workers=50) as executor:
             mapper = {executor.submit(query_type, url): url for url in list_type}
             for future in as_completed(mapper):
                 future.result()
-            if self.BL_MATCHES == 0:
+            if self.bl_matches == 0:
                 logger.info(f"[-] {self.query} is not listed in active {list_name}")
 
     def blacklist_worker(self, blacklist):
@@ -187,7 +190,7 @@ class Workers:
             match = re.findall(self.query, req.text)
             if match:
                 logger.warning(f"\u2716  {self.query} --> {blacklist}")
-                self.BL_MATCHES += 1
+                self.bl_matches += 1
         except AddressValueError as err:
             logger.error(f"[error] {err}")
         except requests.exceptions.Timeout:
@@ -208,20 +211,22 @@ class Workers:
     def blacklist_ipbl_worker(self):
         self.bl_mapper(query_type=self.blacklist_query, list_type=IP_LISTS, list_name="IP Blacklists")
 
-    # ----[ IP BLOCKS SECTION ]---
     def blacklist_ipblock_query(self, blacklist):
         self.blacklist_worker(blacklist)
 
     def blacklist_netblock_worker(self):
         self.bl_mapper(query_type=self.blacklist_ipblock_query, list_type=IP_BLOCKS, list_name="NetBlock Blacklists")
 
-    # ----[ WHOIS SECTION ]---
-    def whois_query(self, QRY):
+    def whois_query(self, qry):
         try:
-            dns_resp = list(dns.resolver.query(QRY, "A"))
+            dns_resp = list(dns.resolver.resolve(qry, "A"))
         except dns.resolver.NXDOMAIN:
-            print(f"[-] Domain {QRY} does not appear to be registered domain.\n")
+            print(f"[-] Domain {qry} does not appear to be registered domain\n")
             time.sleep(1)  # prevents [WinError 10054]
+        except dns.resolver.NoAnswer:
+            print(f"[-] No answer for domain {qry}\n")
+        except dns.resolver.Timeout:
+            print(f"[-] Timeout for resolving domain {qry}\n")
         else:
             print(f"IP Address: {dns_resp[0]}")
 
@@ -231,52 +236,34 @@ class Workers:
             else:
                 logger.info("Cloudflare IP: No")
 
-            w = whois.whois(QRY)
-            if w.registered:
-                print("Registered to:", w.registered)
-
-            print("Registrar:", w.registrar)
-            print("Organization:", w.org)
-
-            if isinstance(w.updated_date, list):
-                print("Updated:", ", ".join(str(x) for x in w.updated_date))
-            else:
-                print("Updated:", w.updated_date)
-
-            if isinstance(w.creation_date, list):
-                print("Created:", ", ".join(str(x) for x in w.creation_date))
-            else:
-                print("Created:", w.creation_date)
-
-            if isinstance(w.expiration_date, list):
-                print("Expires:", ", ".join(str(x) for x in w.expiration_date))
-            else:
-                print("Expires:", w.expiration_date)
-
-            if isinstance(w.emails, list):
-                print("Email Address:", ", ".join(x for x in w.emails))
-            else:
-                print("Email Address:", w.emails)
+            loop = asyncio.get_event_loop()
+            who = loop.run_until_complete(asyncwhois.aio_whois_domain(qry))
+            print("Registered to:", who.parser_output["registrant_organization"])
+            print("Registrar:", who.parser_output["registrar"])
+            print("Organization:", who.parser_output["registrant_organization"])
+            print("Updated:", who.parser_output["updated"])
+            print("Created:", who.parser_output["created"])
+            print("Expires:", who.parser_output["expires"])
+            print("Email Address:", who.parser_output["registrant_email"])
 
     # ----[ CLOUDFLARE CHECK SECTION ]---
     @staticmethod
-    def chk_cflare_list(QRY):
+    def chk_cflare_list(qry):
         for net in CFLARE_IPS:
-            if IPv4Address(QRY) in IPv4Network(net):
+            if IPv4Address(qry) in IPv4Network(net):
                 yield True
 
-    def cflare_results(self, QRY):
-        for ip in self.chk_cflare_list(QRY):
-            return ip
+    def cflare_results(self, qry):
+        for ip_address in self.chk_cflare_list(qry):
+            return ip_address
 
     @staticmethod
     def tc_query(qry):
         cymru = f"{qry}.malware.hash.cymru.com"
         try:
-            resolver = dns.resolver.Resolver()
-            resolver.timeout = 1
-            resolver.lifetime = 1
-            answer = resolver.query(cymru, "A")
+            resolver = dns.resolver.Resolver(configure=False)
+            resolver.nameservers = ["8.8.8.8", "1.1.1.1", "9.9.9.9"]
+            answer = resolver.resolve(cymru, "A")
         except (dns.resolver.NXDOMAIN, dns.resolver.Timeout, dns.resolver.NoNameservers, dns.resolver.NoAnswer):
             pass
         else:

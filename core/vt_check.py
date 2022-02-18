@@ -10,7 +10,7 @@ helpers = Helpers()
 
 
 class VirusTotalChk:
-    # Ref: https://developers.virustotal.com/v3.0/reference
+    """https://developers.virustotal.com/v3.0/reference"""
 
     def __init__(self, api_key=None):
         self.api_key = api_key
@@ -20,8 +20,8 @@ class VirusTotalChk:
         if api_key is None:
             raise Exception("Verify that you have provided your API key.")
 
-    # ---[ VirusTotal Connection ]---
     def vt_connect(self, url):
+        """VirusTotal Connection"""
         try:
             resp = requests.get(url, headers=self.headers, timeout=5)
         except requests.exceptions.Timeout:
@@ -40,9 +40,10 @@ class VirusTotalChk:
                 print(f"[error] {resp.status_code} {responses[resp.status_code]}")  # nopep8
             else:
                 return resp.json()
+        return None
 
-    def vt_run(self, scan_type, QRY):
-        url = f"{self.base_url}/{scan_type}/{QRY}"
+    def vt_run(self, scan_type, qry):
+        url = f"{self.base_url}/{scan_type}/{qry}"
         data = json.dumps(self.vt_connect(url))
         json_resp = json.loads(data)
         if json_resp:
@@ -54,7 +55,7 @@ class VirusTotalChk:
                 pass
             else:
                 if results["meaningful_name"]:
-                    logger.info("Filename: ", results["meaningful_name"])
+                    logger.info(f"Filename: {results['meaningful_name']}")
                 for engine, result in results["last_analysis_results"].items():
                     if result["category"] == "malicious":
                         bad += 1
@@ -62,6 +63,6 @@ class VirusTotalChk:
                     else:
                         good += 1
                 if bad == 0:
-                    logger.success(f"\u2714 {good} engines deemed '{QRY}' as harmless\n")  # nopep8
+                    logger.success(f"\u2714 {good} engines deemed '{qry}' as harmless\n")  # nopep8
                 else:
-                    logger.info(f"{bad} engines deemed '{QRY}' as malicious\n")
+                    logger.info(f"{bad} engines deemed '{qry}' as malicious\n")
