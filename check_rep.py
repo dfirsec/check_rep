@@ -166,16 +166,16 @@ def main():
 
     # ---[ Results output ]-------------------------------
     print(colored.stylize("\n--[ Results ]--", colored.attr("bold")))
-    totals = workers.DNSBL_MATCHES + workers.BL_MATCHES
-    bl_totals = workers.BL_MATCHES
+    totals = workers.dnsbl_matches + workers.bl_matches
+    bl_totals = workers.bl_matches
     if totals == 0:
         logger.info(f"[-] {qry} is not listed in any Blacklists\n")
     else:
         _QRY = Fore.YELLOW + qry + Style.BRIGHT + Style.RESET_ALL
 
-        _DNSBL_MATCHES = f"{Fore.WHITE}{Back.RED}{str(workers.DNSBL_MATCHES)}{Style.BRIGHT}{Style.RESET_ALL}"
+        _dnsbl_matches = f"{Fore.WHITE}{Back.RED}{str(workers.dnsbl_matches)}{Style.BRIGHT}{Style.RESET_ALL}"
         _BL_TOTALS = f"{Fore.WHITE}{Back.RED}{str(bl_totals)}{Style.BRIGHT}{Style.RESET_ALL}"
-        logger.info(f"> {_QRY} is listed in {_DNSBL_MATCHES} DNSBL lists and {_BL_TOTALS} Blacklists\n")
+        logger.info(f"> {_QRY} is listed in {_dnsbl_matches} DNSBL lists and {_BL_TOTALS} Blacklists\n")
 
     # ---[ Geo Map output ]-------------------------------
     if args.fg or args.mx:
