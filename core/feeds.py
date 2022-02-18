@@ -3,7 +3,6 @@ IP_LISTS = [
     "http://malc0de.com/bl/IP_Blacklist.txt",
     "http://osint.bambenekconsulting.com/feeds/c2-ipmasterlist.txt",
     "http://reputation.alienvault.com/reputation.data",
-    "http://www.blocklist.de/lists/all.txt",
     "http://www.ciarmy.com/list/ci-badguys.txt",
     "http://www.ipspamlist.com/public_feeds.csv",
     "http://www.malwaredomainlist.com/hostslist/ip.txt",
@@ -58,19 +57,19 @@ IP_BLOCKS = [
 ]
 
 DOM_LISTS = [
-    "http://osint.bambenekconsulting.com/feeds/c2-dommasterlist.txt",
-    "https://www.dshield.org/feeds/suspiciousdomains_Low.txt",
-    "http://www.joewein.net/dl/bl/dom-bl.txt",
-    "http://mirror1.malwaredomains.com/files/domains.txt",
-    "https://malc0de.com/bl/ZONES",
     "http://malc0de.com/bl/BOOT",
+    "http://mirror1.malwaredomains.com/files/domains.txt",
     "http://openphish.com/feed.txt",
-    "https://quttera.com/lists/malicious",
+    "http://www.joewein.net/dl/bl/dom-bl.txt",
     "http://www.threatcrowd.org/feeds/domains.txt",
+    "https://malc0de.com/bl/ZONES",
+    "https://phishing.army/download/phishing_army_blocklist_extended.txt",
+    "https://quttera.com/lists/malicious",
+    "https://threatfox.abuse.ch/downloads/hostfile/",
     "https://urlhaus.abuse.ch/downloads/csv",
+    "https://www.dshield.org/feeds/suspiciousdomains_Low.txt",
     "https://www.malwaredomainlist.com/hostslist/hosts.txt",
     "https://www.threatweb.com/access/SIEM/OPTIV_HIGH_CONFIDENCE_SIEM_DOMAIN_WATCHLIST.txt",
-    "https://phishing.army/download/phishing_army_blocklist_extended.txt",
 ]
 
 URLS = [
