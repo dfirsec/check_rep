@@ -31,8 +31,8 @@ prog_root = Path(__file__).resolve().parent
 # ---[ Configuration Parser ]---
 yaml = YAML()
 settings = prog_root.joinpath("settings.yml")
-with open(settings) as _file:
-    config = yaml.load(_file)
+with open(settings, encoding="utf-8") as api:
+    config = yaml.load(api)
 
 
 def main():
@@ -90,9 +90,9 @@ def main():
         if not os.path.exists("logfile"):
             os.mkdir("logfile")
         dt_stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-        file_log = logging.FileHandler(f"logfile/logfile_{dt_stamp}.txt")
-        file_log.setFormatter(logging.Formatter("[%(asctime)s %(levelname)s] %(message)s", datefmt="%m/%d/%Y %I:%M:%S"))
-        logger.addHandler(file_log)
+        handlers = logging.FileHandler(f"logfile/logfile_{dt_stamp}.txt", "w", "utf-8")
+        handlers.setFormatter(logging.Formatter("[%(asctime)s %(levelname)s] %(message)s", datefmt="%m/%d/%Y %I:%M:%S"))
+        logger.addHandler(handlers)
 
     if args.fg:
         map_free_geo(qry)
@@ -116,7 +116,7 @@ def main():
             user_vt_key = input("Enter key: ")
             config["VIRUS-TOTAL"]["api_key"] = user_vt_key
 
-            with open("settings.yml", "w") as output:
+            with open("settings.yml", "w", encoding="utf-8") as output:
                 yaml.dump(config, output)
 
         api_key = config["VIRUS-TOTAL"]["api_key"]
@@ -171,11 +171,11 @@ def main():
     if totals == 0:
         logger.info(f"[-] {qry} is not listed in any Blacklists\n")
     else:
-        _QRY = Fore.YELLOW + qry + Style.BRIGHT + Style.RESET_ALL
+        qry_format = Fore.YELLOW + qry + Style.BRIGHT + Style.RESET_ALL
 
-        _dnsbl_matches = f"{Fore.WHITE}{Back.RED}{str(workers.dnsbl_matches)}{Style.BRIGHT}{Style.RESET_ALL}"
-        _BL_TOTALS = f"{Fore.WHITE}{Back.RED}{str(bl_totals)}{Style.BRIGHT}{Style.RESET_ALL}"
-        logger.info(f"> {_QRY} is listed in {_dnsbl_matches} DNSBL lists and {_BL_TOTALS} Blacklists\n")
+        dnsbl_matches_out = f"{Fore.WHITE}{Back.RED}{str(workers.dnsbl_matches)}{Style.BRIGHT}{Style.RESET_ALL}"
+        bl_totals_out = f"{Fore.WHITE}{Back.RED}{str(bl_totals)}{Style.BRIGHT}{Style.RESET_ALL}"
+        logger.info(f"> {qry_format} is listed in {dnsbl_matches_out} DNSBL lists and {bl_totals_out} Blacklists\n")
 
     # ---[ Geo Map output ]-------------------------------
     if args.fg or args.mx:
