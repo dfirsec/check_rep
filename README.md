@@ -2,7 +2,7 @@
 
 ![Generic badge](https://img.shields.io/badge/python-3.7-blue.svg) [![Twitter](https://img.shields.io/badge/Twitter-@pulsecode-blue.svg)](https://twitter.com/pulsecode)
 
-`check_rep.py` Check IP or Domain reputation against several open-source Blacklists.
+Check IP or Domain reputation against several open-source Blacklists.
 
 Option to create a Geolocation map file using coordinates derived from [freegeoip.live](https://freegeoip.live).
 
