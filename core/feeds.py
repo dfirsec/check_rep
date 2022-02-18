@@ -3,7 +3,6 @@ IP_LISTS = [
     "http://malc0de.com/bl/IP_Blacklist.txt",
     "http://osint.bambenekconsulting.com/feeds/c2-ipmasterlist.txt",
     "http://reputation.alienvault.com/reputation.data",
-    "http://www.badips.com/get/list/apache-wordpress/0?age=1000h",
     "http://www.blocklist.de/lists/all.txt",
     "http://www.ciarmy.com/list/ci-badguys.txt",
     "http://www.ipspamlist.com/public_feeds.csv",
@@ -48,7 +47,6 @@ IP_LISTS = [
     "https://www.threatcrowd.org/feeds/ips.txt",
     "https://www.threatweb.com/access/Botnet-IPs-High_Confidence_BL.txt",
     "https://www.threatweb.com/access/SIEM/OPTIV_HIGH_CONFIDENCE_SIEM_IP_WATCHLIST.txt",
-    "https://zeustracker.abuse.ch/blocklist.php?download=ipblocklist",
     "https://zonefiles.io/f/compromised/ip/live/",
 ]
 
