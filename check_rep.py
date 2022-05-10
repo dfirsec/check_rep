@@ -65,7 +65,7 @@ def main():
 
     optional = parser._action_groups.pop()
     required = parser.add_argument_group("required arguments")
-    required.add_argument("query", help="query ip address or domain")
+    required.add_argument("-q", help="query ip address or domain")
     optional.add_argument("--log", action="store_true", help="log results to file")
     optional.add_argument("--vt", action="store_true", help="check virustotal")
 
@@ -75,7 +75,7 @@ def main():
 
     parser._action_groups.append(optional)
     args = parser.parse_args()
-    qry = args.query
+    qry = args.q
 
     if len(sys.argv[1:]) == 0:
         parser.print_help()
@@ -98,7 +98,7 @@ def main():
         map_free_geo(qry)
 
     if args.mx:
-        print(colored.stylize("\n--[ Processing Geolocation Map ]--", colored.attr("bold")))
+        # print(colored.stylize("\n--[ Processing Geolocation Map ]--", colored.attr("bold")))
         multi_map(input_file=args.mx[0])
         print(colored.stylize("\n--[ GeoIP Map File ]--", colored.attr("bold")))
         try:
@@ -141,19 +141,7 @@ def main():
         workers.whois_query(qry)
 
     elif IP.findall(qry):
-        # Check if cloudflare ip
-        print(colored.stylize("\n--[ Using Cloudflare? ]--", colored.attr("bold")))
-        if workers.cflare_results(qry):
-            logger.info("Cloudflare IP: Yes")
-        else:
-            logger.info("Cloudflare IP: No")
-
-        print(colored.stylize("\n--[ Querying DNSBL Lists ]--", colored.attr("bold")))
-        workers.dnsbl_mapper()
-        workers.spamhaus_ipbl_worker()
-        print(colored.stylize("\n--[ Querying IP Blacklists ]--", colored.attr("bold")))
-        workers.blacklist_ipbl_worker()
-
+        workers.query_ip(qry)
     elif NET.findall(qry):
         print(colored.stylize("\n--[ Querying NetBlock Blacklists ]--", colored.attr("bold")))
         workers.blacklist_netblock_worker()
