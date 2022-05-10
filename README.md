@@ -18,14 +18,14 @@ Use of VirusTotal option requires an API key.  The service is free, however you 
                                        /_/
 
 Check IP and Domain Reputation
-usage: check_rep.py [-h] [-q query] [--log] [--vt] [--fg | --mx FILE [FILE ...]]
+usage: check_rep.py [-h] [-q Q] [--log] [--vt] [--fg | --mx FILE [FILE ...]]
 
 Check IP or Domain Reputation
 
 required arguments:
-  -q query              query ip address or domain
+  -q Q                  query ip address or domain
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   --log                 log results to file
   --vt                  check virustotal
