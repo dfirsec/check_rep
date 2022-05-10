@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import logging
 import pathlib
 import random
@@ -10,6 +11,7 @@ from http.client import responses
 from ipaddress import AddressValueError, IPv4Address, IPv4Network, ip_address
 
 import asyncwhois
+import colored
 import coloredlogs
 import dns.resolver
 import requests
@@ -44,7 +46,7 @@ class Helpers:
         pattern = dict(
             ip_addr=r"(^(\d{1,3}\.){0,3}\d{1,3}$)",
             ip_net=r"(^(\d{1,3}\.){0,3}\d{1,3}/\d{1,2}$)",
-            domain=fr"([A-Za-z0-9]+(?:[\-|\.][A-Za-z0-9]+)*(?:\[\.\]|\.)(?:{tlds}))",
+            domain=rf"([A-Za-z0-9]+(?:[\-|\.][A-Za-z0-9]+)*(?:\[\.\]|\.)(?:{tlds}))",
             email=r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]{2,5}$)",
             url=r"(http[s]?:\/\/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)",
         )
@@ -69,8 +71,7 @@ class Helpers:
             "Chrome/40.0.2214.38 Safari/537.36",
             "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)",
         ]
-        use_headers = {"user-agent": random.choice(ua_list)}
-        return use_headers
+        return {"user-agent": random.choice(ua_list)}
 
     # ---[ File Downloader NO LONGER USED ]---
     @staticmethod
@@ -120,7 +121,7 @@ class Workers:
 
     # ---[ Query DNSBL Lists ]---
     def dnsbl_query(self, blacklist):
-        host = str("".join(self.query))
+        host = "".join(self.query)
 
         # Return Codes
         codes = [
@@ -143,7 +144,9 @@ class Workers:
             "127.0.1.106",
         ]
 
-        try:
+        with contextlib.suppress(
+            dns.resolver.NXDOMAIN, dns.resolver.Timeout, dns.resolver.NoNameservers, dns.resolver.NoAnswer
+        ):
             resolver = dns.resolver.Resolver(configure=False)
             resolver.nameservers = ["8.8.8.8", "1.1.1.1", "9.9.9.9"]
             resolver = dns.resolver.Resolver()
@@ -154,13 +157,11 @@ class Workers:
                 except ValueError:
                     sys.exit(f"{host} is not a valid IP address")
             elif helpers.regex(_type="domain").findall(self.query):
-                qry = ".".join(str(host).split(".")) + "." + blacklist
+                qry = ".".join(host.split(".")) + "." + blacklist
             answer = resolver.query(qry, "A")
             if any(str(answer[0]) in s for s in codes):
                 logger.info(f"\u2716  {self.query} --> {blacklist}")
                 self.dnsbl_matches += 1
-        except (dns.resolver.NXDOMAIN, dns.resolver.Timeout, dns.resolver.NoNameservers, dns.resolver.NoAnswer):
-            pass
 
     def dnsbl_mapper(self):
         with ThreadPoolExecutor(max_workers=50) as executor:
@@ -187,18 +188,17 @@ class Workers:
         try:
             req = requests.get(blacklist, headers=helpers.headers(), timeout=3)
             req.encoding = "utf-8"
-            match = re.findall(self.query, req.text)
-            if match:
+            if match := re.findall(self.query, req.text):
                 logger.warning(f"\u2716  {self.query} --> {blacklist}")
                 self.bl_matches += 1
         except AddressValueError as err:
-            logger.error(f"[error] {err}")
+            logger.error(f"[-] {err}")
         except requests.exceptions.Timeout:
-            logger.notice(f"[timeout] {blacklist}")
+            logger.notice(f"[-] {blacklist}")
         except requests.exceptions.HTTPError as err:
-            logger.error(f"[error] {err}")
+            logger.error(f"[-] {err}")
         except requests.exceptions.ConnectionError:
-            logger.error(f"[error] Problem connecting to {blacklist}")
+            logger.error(f"[-] Problem connecting to {blacklist}")
         except requests.exceptions.RequestException as err:
             logger.critical(f"[critical] {err}")
 
@@ -221,30 +221,33 @@ class Workers:
         try:
             dns_resp = list(dns.resolver.resolve(qry, "A"))
         except dns.resolver.NXDOMAIN:
-            print(f"[-] Domain {qry} does not appear to be registered domain\n")
+            logger.error(f"[-] Domain '{qry}' does not appear to be a registered domain\n")
             time.sleep(1)  # prevents [WinError 10054]
         except dns.resolver.NoAnswer:
-            print(f"[-] No answer for domain {qry}\n")
+            logger.error(f"[-] No answer for domain {qry}\n")
         except dns.resolver.Timeout:
-            print(f"[-] Timeout for resolving domain {qry}\n")
+            logger.error(f"[-] Timeout for resolving domain {qry}\n")
         else:
-            print(f"IP Address: {dns_resp[0]}")
+            self.get_dns_info(dns_resp, qry)
 
-            # Check if cloudflare ip
-            if self.cflare_results(dns_resp[0]):
-                logger.info("Cloudflare IP: Yes")
-            else:
-                logger.info("Cloudflare IP: No")
+    def get_dns_info(self, dns_resp, qry):
+        print(f"IP Address: {dns_resp[0]}")
 
-            loop = asyncio.get_event_loop()
-            who = loop.run_until_complete(asyncwhois.aio_whois_domain(qry))
-            print("Registered to:", who.parser_output["registrant_organization"])
-            print("Registrar:", who.parser_output["registrar"])
-            print("Organization:", who.parser_output["registrant_organization"])
-            print("Updated:", who.parser_output["updated"])
-            print("Created:", who.parser_output["created"])
-            print("Expires:", who.parser_output["expires"])
-            print("Email Address:", who.parser_output["registrant_email"])
+        # Check if cloudflare ip
+        if self.cflare_results(dns_resp[0]):
+            logger.info("Cloudflare IP: Yes")
+        else:
+            logger.info("Cloudflare IP: No")
+
+        loop = asyncio.get_event_loop()
+        who = loop.run_until_complete(asyncwhois.aio_whois_domain(qry))
+        print("Registered to:", who.parser_output["registrant_organization"])
+        print("Registrar:", who.parser_output["registrar"])
+        print("Organization:", who.parser_output["registrant_organization"])
+        print("Updated:", who.parser_output["updated"])
+        print("Created:", who.parser_output["created"])
+        print("Expires:", who.parser_output["expires"])
+        print("Email Address:", who.parser_output["registrant_email"])
 
     # ----[ CLOUDFLARE CHECK SECTION ]---
     @staticmethod
@@ -269,3 +272,17 @@ class Workers:
         else:
             if answer:
                 logger.error("\u2718 malware.hash.cymru.com: MALICIOUS")
+
+    def query_ip(self, qry):
+        # Check if cloudflare ip
+        print(colored.stylize("\n--[ Using Cloudflare? ]--", colored.attr("bold")))
+        if self.cflare_results(qry):
+            logger.info("Cloudflare IP: Yes")
+        else:
+            logger.info("Cloudflare IP: No")
+
+        print(colored.stylize("\n--[ Querying DNSBL Lists ]--", colored.attr("bold")))
+        self.dnsbl_mapper()
+        self.spamhaus_ipbl_worker()
+        print(colored.stylize("\n--[ Querying IP Blacklists ]--", colored.attr("bold")))
+        self.blacklist_ipbl_worker()
