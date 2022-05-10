@@ -1,3 +1,4 @@
+aiodns
 asyncwhois
 colorama
 colored
@@ -7,5 +8,6 @@ folium
 geoip2
 ruamel.yaml
 simplejson
+tldextract
 tqdm
 verboselogs
