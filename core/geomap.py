@@ -68,8 +68,8 @@ def multi_map(input_file):
     with open(input_file, encoding="utf-8") as file_obj:
         line = [line.strip() for line in file_obj.readlines()]
         for address in line:
+            workers = Workers(address)
             if DOMAIN.findall(address):
-                workers = Workers(address)
                 print(colored.stylize("\n--[ Querying Domain Blacklists ]--", colored.attr("bold")))
                 workers.spamhaus_dbl_worker()
                 workers.blacklist_dbl_worker()
@@ -95,7 +95,6 @@ def multi_map(input_file):
                         ip_map.save(multi_map_file)
 
             if IP.findall(address) and IPv4Address(address):
-                workers = Workers(address)
                 workers.query_ip(address)
                 if address is not None:
                     logger.success(f"[+] Mapping {address}")
