@@ -9,9 +9,7 @@ IP_LISTS = [
     "https://blocklist.greensnow.co/greensnow.txt",
     "https://botvrij.eu/data/ioclist.ip-dst",
     "https://botvrij.eu/data/ioclist.url",
-    "https://feodotracker.abuse.ch/downloads/ipblocklist.csv",
     "https://feodotracker.abuse.ch/downloads/ipblocklist.txt",
-    "https://feodotracker.abuse.ch/downloads/ipblocklist_recommended.txt",
     "https://malware.army/api/honey_iplist",
     "https://myip.ms/files/blacklist/general/latest_blacklist.txt",
     "https://onionoo.torproject.org/details?type=relay&running=true",
@@ -46,7 +44,6 @@ IP_LISTS = [
     "https://www.threatcrowd.org/feeds/ips.txt",
     "https://www.threatweb.com/access/Botnet-IPs-High_Confidence_BL.txt",
     "https://www.threatweb.com/access/SIEM/OPTIV_HIGH_CONFIDENCE_SIEM_IP_WATCHLIST.txt",
-    "https://zonefiles.io/f/compromised/ip/live/",
 ]
 
 IP_BLOCKS = [
@@ -57,12 +54,10 @@ IP_BLOCKS = [
 ]
 
 DOM_LISTS = [
-    "http://malc0de.com/bl/BOOT",
     "http://mirror1.malwaredomains.com/files/domains.txt",
     "http://openphish.com/feed.txt",
     "http://www.joewein.net/dl/bl/dom-bl.txt",
     "http://www.threatcrowd.org/feeds/domains.txt",
-    "https://malc0de.com/bl/ZONES",
     "https://phishing.army/download/phishing_army_blocklist_extended.txt",
     "https://quttera.com/lists/malicious",
     "https://threatfox.abuse.ch/downloads/hostfile/",
