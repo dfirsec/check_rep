@@ -14,13 +14,12 @@ from core.utils import DOMAIN, EMAIL, IP, NET, URL, Workers, logger
 from core.vt_check import VirusTotalChk
 
 __author__ = "DFIRSec (@pulsecode)"
-__version__ = "2.0"
+__version__ = "2.1"
 __description__ = "Check IP or Domain reputation against 400+ open-source Blacklists."
 
 # ---[ Python v3 check ]---
-if sys.version_info[0] == 3 and sys.version_info[1] <= 5:
-    print("\n[x] Please use python version 3.6 or higher.\n")
-    sys.exit()
+if sys.version_info[0] == 3 and sys.version_info[1] <= 7:
+    sys.exit("\n[x] Please use python version 3.7 or higher.\n")
 
 # ---[ Initialize Colorama ]---
 init(autoreset=True)
