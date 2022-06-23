@@ -35,7 +35,8 @@ class VirusTotalChk:
         else:
             resp.encoding = "utf-8"
             if resp.status_code == 401:
-                sys.exit("[error] Verify that you have provided a valid API key.")
+                sys.exit(
+                    "[error] Verify that you have provided a valid API key.")
             if resp.status_code != 200:
                 print(f"[error] {resp.status_code} {responses[resp.status_code]}")  # nopep8
             else:
@@ -53,12 +54,16 @@ class VirusTotalChk:
             except AttributeError:
                 pass
             else:
-                if results["meaningful_name"]:
-                    logger.info(f"Filename: {results['meaningful_name']}")
+                try:
+                    if results["meaningful_name"]:
+                        logger.info(f"Filename: {results['meaningful_name']}")
+                except KeyError:
+                    pass
                 for engine, result in results["last_analysis_results"].items():
                     if result["category"] == "malicious":
                         bad += 1
-                        logger.error(f"\u2718 {engine}: {result['category'].upper()}")
+                        logger.error(
+                            f"\u2718 {engine}: {result['category'].upper()}")
                     else:
                         good += 1
                 if bad == 0:
