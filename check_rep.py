@@ -17,10 +17,6 @@ __author__ = "DFIRSec (@pulsecode)"
 __version__ = "2.1"
 __description__ = "Check IP or Domain reputation against 400+ open-source Blacklists."
 
-# ---[ Python v3 check ]---
-if sys.version_info[0] == 3 and sys.version_info[1] <= 7:
-    sys.exit("\n[x] Please use python version 3.7 or higher.\n")
-
 # ---[ Initialize Colorama ]---
 init(autoreset=True)
 
@@ -30,6 +26,19 @@ prog_root = Path(__file__).resolve().parent
 # ---[ Configuration Parser ]---
 yaml = YAML()
 settings = prog_root.joinpath("settings.yml")
+
+# Create settings.yml file if it does not exist.
+TEXT = """# Add API Key after 'api_key:'
+# Example: api_key: 23efd1000l3eh444f34l0000kfe56kec0
+
+VIRUS-TOTAL:
+  api_key:
+"""
+if not settings.exists():
+
+    with open(settings, "w", encoding="utf-8") as fileobj:
+        fileobj.writelines(TEXT)
+
 with open(settings, encoding="utf-8") as api:
     config = yaml.load(api)
 
@@ -178,4 +187,9 @@ def main():
 
 
 if __name__ == "__main__":
+
+    # ---[ Python v3.7+ check ]---
+    if sys.version_info[0] == 3 and sys.version_info[1] <= 7:
+        sys.exit("\n[x] Please use python version 3.7 or higher.\n")
+
     main()
