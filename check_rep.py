@@ -23,39 +23,8 @@ init(autoreset=True)
 # ---[ Define program root directory ]---
 prog_root = Path(__file__).resolve().parent
 
-# ---[ Configuration Parser ]---
-yaml = YAML()
-settings = prog_root.joinpath("settings.yml")
 
-# Create settings.yml file if it does not exist.
-TEXT = """# Add API Key after 'api_key:'
-# Example: api_key: 23efd1000l3eh444f34l0000kfe56kec0
-
-VIRUS-TOTAL:
-  api_key:
-"""
-if not settings.exists():
-
-    with open(settings, "w", encoding="utf-8") as fileobj:
-        fileobj.writelines(TEXT)
-
-with open(settings, encoding="utf-8") as api:
-    config = yaml.load(api)
-
-
-def main():
-    banner = r"""
-   ________              __      ____
-  / ____/ /_  ___  _____/ /__   / __ \___  ____
- / /   / __ \/ _ \/ ___/ //_/  / /_/ / _ \/ __ \
-/ /___/ / / /  __/ /__/ ,<    / _, _/  __/ /_/ /
-\____/_/ /_/\___/\___/_/|_|  /_/ |_|\___/ .___/
-                                       /_/
-"""
-
-    print(f"{Fore.CYAN}{banner}{Style.RESET_ALL}")
-    print("Check IP and Domain Reputation")
-
+def argparser():
     parser = argparse.ArgumentParser(
         description="Check IP or Domain Reputation",
         formatter_class=argparse.RawTextHelpFormatter,
@@ -83,14 +52,85 @@ def main():
 
     parser._action_groups.append(optional)
     args = parser.parse_args()
-    qry = args.q
 
     if len(sys.argv[1:]) == 0:
         parser.print_help()
         parser.exit()
 
+    return args, parser
+
+
+def multi_map_arg(arg):
+    # print(colored.stylize("\n--[ Processing Geolocation Map ]--", colored.attr("bold")))
+    multi_map(input_file=arg)
+    print(colored.stylize("\n--[ GeoIP Map File ]--", colored.attr("bold")))
+    try:
+        multi_map_file = Path("multi_map.html").resolve(strict=True)
+    except FileNotFoundError:
+        logger.info("[-] Geolocation map file was not created or does not exist.")
+    else:
+        logger.info(f"> Geolocation map file saved to: {multi_map_file}")
+    sys.exit(1)
+
+
+def vt_arg(arg, vt_config, workers):
+    print(colored.stylize("\n--[ VirusTotal Detections ]--", colored.attr("bold")))
+    if not vt_config["VIRUS-TOTAL"]["api_key"]:
+        logger.warning("Please add VirusTotal API key to the 'settings.yml' file, or add it below")
+        user_vt_key = input("Enter key: ")
+        vt_config["VIRUS-TOTAL"]["api_key"] = user_vt_key
+
+        with open("settings.yml", "w", encoding="utf-8") as output:
+            yaml.dump(vt_config, output)
+
+    api_key = vt_config["VIRUS-TOTAL"]["api_key"]
+    virustotal = VirusTotalChk(api_key)
+
+    if DOMAIN.findall(arg):
+        virustotal.vt_run("domains", arg)
+
+    elif IP.findall(arg):
+        virustotal.vt_run("ip_addresses", arg)
+
+    elif URL.findall(arg):
+        virustotal.vt_run("urls", arg)
+
+    else:
+        virustotal.vt_run("files", arg)
+        print(colored.stylize("\n--[ Team Cymru Detection ]--", colored.attr("bold")))
+        workers.tc_query(qry=arg)
+        sys.exit("\n")
+
+
+def domain_arg(workers, arg):
+    print(colored.stylize("\n--[ Querying Domain Blacklists ]--", colored.attr("bold")))
+    workers.spamhaus_dbl_worker()
+    workers.blacklist_dbl_worker()
+
+    print(colored.stylize(f"\n--[ WHOIS for {arg} ]--", colored.attr("bold")))
+    workers.whois_query(arg)
+
+
+def geomap_output():
+    print(colored.stylize("--[ GeoIP Map File ]--", colored.attr("bold")))
+    time_format = "%d %B %Y %H:%M:%S"
+    try:
+        ip_map_file = prog_root.joinpath("geomap/ip_map.html").resolve(strict=True)
+    except FileNotFoundError:
+        logger.warning("[-] Geolocation map file was not created/does not exist.\n")
+    else:
+        ip_map_timestamp = datetime.fromtimestamp(os.path.getctime(ip_map_file))
+        logger.info(f"> Geolocation map file created: {ip_map_file} [{ip_map_timestamp.strftime(time_format)}]\n")
+
+
+def main(config):
+    # Parse the arguments from the command line.
+    args = argparser()[0]
+    parser = argparser()[1]
+    query = args.q
+
     # Initialize utilities
-    workers = Workers(qry)
+    workers = Workers(query)
 
     print(f"\n{Fore.GREEN}[+] Running checks...{Style.RESET_ALL}")
 
@@ -103,54 +143,21 @@ def main():
         logger.addHandler(handlers)
 
     if args.fg:
-        map_free_geo(qry)
+        map_free_geo(query)
 
     if args.mx:
-        # print(colored.stylize("\n--[ Processing Geolocation Map ]--", colored.attr("bold")))
-        multi_map(input_file=args.mx[0])
-        print(colored.stylize("\n--[ GeoIP Map File ]--", colored.attr("bold")))
-        try:
-            multi_map_file = Path("multi_map.html").resolve(strict=True)
-        except FileNotFoundError:
-            logger.info("[-] Geolocation map file was not created or does not exist.")
-        else:
-            logger.info(f"> Geolocation map file saved to: {multi_map_file}")
-        sys.exit(1)
+        multi_map_arg(arg=args.mx[0])
 
     if args.vt:
-        print(colored.stylize("\n--[ VirusTotal Detections ]--", colored.attr("bold")))
-        if not config["VIRUS-TOTAL"]["api_key"]:
-            logger.warning("Please add VirusTotal API key to the 'settings.yml' file, or add it below")
-            user_vt_key = input("Enter key: ")
-            config["VIRUS-TOTAL"]["api_key"] = user_vt_key
+        vt_arg(query, config, workers)
 
-            with open("settings.yml", "w", encoding="utf-8") as output:
-                yaml.dump(config, output)
+    if DOMAIN.findall(query) and not EMAIL.findall(query):
+        domain_arg(workers, query)
 
-        api_key = config["VIRUS-TOTAL"]["api_key"]
-        virustotal = VirusTotalChk(api_key)
-        if DOMAIN.findall(qry):
-            virustotal.vt_run("domains", qry)
-        elif IP.findall(qry):
-            virustotal.vt_run("ip_addresses", qry)
-        elif URL.findall(qry):
-            virustotal.vt_run("urls", qry)
-        else:
-            virustotal.vt_run("files", qry)
-            print(colored.stylize("\n--[ Team Cymru Detection ]--", colored.attr("bold")))
-            workers.tc_query(qry=qry)
-            sys.exit("\n")
+    elif IP.findall(query):
+        workers.query_ip(query)
 
-    if DOMAIN.findall(qry) and not EMAIL.findall(qry):
-        print(colored.stylize("\n--[ Querying Domain Blacklists ]--", colored.attr("bold")))
-        workers.spamhaus_dbl_worker()
-        workers.blacklist_dbl_worker()
-        print(colored.stylize(f"\n--[ WHOIS for {qry} ]--", colored.attr("bold")))
-        workers.whois_query(qry)
-
-    elif IP.findall(qry):
-        workers.query_ip(qry)
-    elif NET.findall(qry):
+    elif NET.findall(query):
         print(colored.stylize("\n--[ Querying NetBlock Blacklists ]--", colored.attr("bold")))
         workers.blacklist_netblock_worker()
 
@@ -165,9 +172,9 @@ def main():
     totals = workers.dnsbl_matches + workers.bl_matches
     bl_totals = workers.bl_matches
     if totals == 0:
-        logger.info(f"[-] {qry} is not listed in any Blacklists\n")
+        logger.info(f"[-] {query} is not listed in any Blacklists\n")
     else:
-        qry_format = Fore.YELLOW + qry + Style.BRIGHT + Style.RESET_ALL
+        qry_format = Fore.YELLOW + query + Style.BRIGHT + Style.RESET_ALL
 
         dnsbl_matches_out = f"{Fore.WHITE}{Back.RED}{str(workers.dnsbl_matches)}{Style.BRIGHT}{Style.RESET_ALL}"
         bl_totals_out = f"{Fore.WHITE}{Back.RED}{str(bl_totals)}{Style.BRIGHT}{Style.RESET_ALL}"
@@ -175,21 +182,44 @@ def main():
 
     # ---[ Geo Map output ]-------------------------------
     if args.fg or args.mx:
-        print(colored.stylize("--[ GeoIP Map File ]--", colored.attr("bold")))
-        time_format = "%d %B %Y %H:%M:%S"
-        try:
-            ip_map_file = prog_root.joinpath("geomap/ip_map.html").resolve(strict=True)
-        except FileNotFoundError:
-            logger.warning("[-] Geolocation map file was not created/does not exist.\n")
-        else:
-            ip_map_timestamp = datetime.fromtimestamp(os.path.getctime(ip_map_file))
-            logger.info(f"> Geolocation map file created: {ip_map_file} [{ip_map_timestamp.strftime(time_format)}]\n")
+        geomap_output()
 
 
 if __name__ == "__main__":
+
+    BANNER = r"""
+   ________              __      ____
+  / ____/ /_  ___  _____/ /__   / __ \___  ____
+ / /   / __ \/ _ \/ ___/ //_/  / /_/ / _ \/ __ \
+/ /___/ / / /  __/ /__/ ,<    / _, _/  __/ /_/ /
+\____/_/ /_/\___/\___/_/|_|  /_/ |_|\___/ .___/
+                                       /_/
+"""
+
+    print(f"{Fore.CYAN}{BANNER}{Style.RESET_ALL}")
+    print("Check IP and Domain Reputation")
 
     # ---[ Python v3.7+ check ]---
     if sys.version_info[0] == 3 and sys.version_info[1] <= 7:
         sys.exit("\n[x] Please use python version 3.7 or higher.\n")
 
-    main()
+    # ---[ Configuration Parser ]---
+    yaml = YAML()
+    settings = prog_root.joinpath("settings.yml")
+
+    # Create settings.yml file if it does not exist.
+    TEXT = """# Add API Key after 'api_key:'
+    # Example: api_key: 23efd1000l3eh444f34l0000kfe56kec0
+
+    VIRUS-TOTAL:
+    api_key:
+    """
+    if not settings.exists():
+
+        with open(settings, "w", encoding="utf-8") as fileobj:
+            fileobj.writelines(TEXT)
+
+    with open(settings, encoding="utf-8") as api:
+        settings_config = yaml.load(api)
+
+    main(settings_config)
