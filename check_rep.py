@@ -212,7 +212,7 @@ if __name__ == "__main__":
     # Example: api_key: 23efd1000l3eh444f34l0000kfe56kec0
 
     VIRUS-TOTAL:
-    api_key:
+        api_key:
     """
     if not settings.exists():
 
