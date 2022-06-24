@@ -212,15 +212,19 @@ if __name__ == "__main__":
     settings = prog_root.joinpath("settings.yml")
 
     # Create settings.yml file if it does not exist.
+    # fmt: off
     TEXT = """# Add API Key after 'api_key:'
-    # Example: api_key: 23efd1000l3eh444f34l0000kfe56kec0
+# Example: api_key: 23efd1000l3eh444f34l0000kfe56kec0
 
-    VIRUS-TOTAL:
-        api_key:
-    """
+VIRUS-TOTAL:
+    api_key:
+"""
+    # fmt: on
 
     if not settings.exists():
+        print("\n[-] Settings.yml' file is missing.")
         with open(settings, "w", encoding="utf-8") as fileobj:
             fileobj.writelines(TEXT)
+        print("[+] Created 'settings.yml' file.")
 
     main(settings)
