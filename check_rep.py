@@ -217,14 +217,13 @@ if __name__ == "__main__":
 # Example: api_key: 23efd1000l3eh444f34l0000kfe56kec0
 
 VIRUS-TOTAL:
-    api_key:
-"""
+    api_key: """
     # fmt: on
 
     if not settings.exists():
-        print("\n[-] Settings.yml' file is missing.")
+        print(f"\n{Fore.YELLOW}[-]{Fore.RESET} The 'settings.yml' file is missing.")
         with open(settings, "w", encoding="utf-8") as fileobj:
             fileobj.writelines(TEXT)
-        print("[+] Created 'settings.yml' file.")
+        print(f"{Fore.GREEN}[+]{Fore.RESET} Created 'settings.yml' file.\n")
 
     main(settings)
