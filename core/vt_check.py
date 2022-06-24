@@ -35,7 +35,8 @@ class VirusTotalChk:
         else:
             resp.encoding = "utf-8"
             if resp.status_code == 401:
-                sys.exit("[error] Verify that you have provided a valid API key.")
+                sys.exit(
+                    "[error] Verify that you have provided a valid API key.")
             if resp.status_code != 200:
                 print(f"[error] {resp.status_code} {responses[resp.status_code]}")  # nopep8
             else:
