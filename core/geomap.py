@@ -2,6 +2,7 @@ import json
 import os
 from ipaddress import IPv4Address
 from pathlib import Path
+
 import colored
 import dns.resolver
 import requests
@@ -43,7 +44,6 @@ def map_free_geo(qry):
         qry = geo_resolver(qry)
 
     if qry is not None:
-        ip_map = Map([40, -5], tiles="OpenStreetMap", zoom_start=3)
         freegeoip = f"https://freegeoip.live/json/{qry}"
         try:
             req = requests.get(freegeoip)
@@ -52,18 +52,23 @@ def map_free_geo(qry):
             logger.warning(f"[error] {err}\n")
         else:
             if req.status_code == 200:
-                data = json.loads(req.content.decode("utf-8"))
-                lat = data["latitude"]
-                lon = data["longitude"]
-                Marker([lat, lon], popup=qry).add_to(ip_map)
-                ip_map.save(ip_map_file)
+                map_maker(req, qry)
+
+
+def map_maker(req, qry):
+    data = json.loads(req.content.decode("utf-8"))
+    lat = data["latitude"]
+    lon = data["longitude"]
+    mapobj = Map(location=[lat, lon], zoom_start=3)
+    Marker(location=[lat, lon], popup=qry).add_to(mapobj)
+    mapobj.save(ip_map_file)
 
 
 def multi_map(input_file):
     os.chdir(geomap_root)
     file_path = os.path.abspath(os.pardir)
     input_file = f"{file_path}/{input_file}"
-    ip_map = Map([40, -5], tiles="OpenStreetMap", zoom_start=3)
+    mapobj = Map(location=[40, -5], zoom_start=3)
 
     with open(input_file, encoding="utf-8") as file_obj:
         line = [line.strip() for line in file_obj.readlines()]
@@ -91,8 +96,8 @@ def multi_map(input_file):
                         lon = data["longitude"]
                         html = f"""{address}<br>
                         {qry}"""
-                        Marker([lat, lon], popup=html).add_to(ip_map)
-                        ip_map.save(multi_map_file)
+                        Marker(location=[lat, lon], popup=html).add_to(mapobj)
+                        mapobj.save(multi_map_file)
 
             if IP.findall(address) and IPv4Address(address):
                 workers.query_ip(address)
@@ -108,5 +113,5 @@ def multi_map(input_file):
                         data = json.loads(req.content.decode("utf-8"))
                         lat = data["latitude"]
                         lon = data["longitude"]
-                        Marker([lat, lon], popup=address).add_to(ip_map)
-                        ip_map.save(multi_map_file)
+                        Marker(location=[lat, lon], popup=address).add_to(mapobj)
+                        mapobj.save(multi_map_file)

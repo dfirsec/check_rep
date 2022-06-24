@@ -54,19 +54,14 @@ class VirusTotalChk:
             except AttributeError:
                 pass
             else:
-                try:
-                    if results["meaningful_name"]:
-                        logger.info(f"Filename: {results['meaningful_name']}")
-                except KeyError:
-                    pass
-                for engine, result in results["last_analysis_results"].items():
-                    if result["category"] == "malicious":
-                        bad += 1
-                        logger.error(
-                            f"\u2718 {engine}: {result['category'].upper()}")
+                if results:
+                    for engine, result in results["last_analysis_results"].items():
+                        if result["category"] == "malicious":
+                            bad += 1
+                            logger.error(f"\u2718 {engine}: {result['category'].upper()}")
+                        else:
+                            good += 1
+                    if bad == 0:
+                        logger.success(f"\u2714 {good} engines deemed '{qry}' as harmless\n")  # nopep8
                     else:
-                        good += 1
-                if bad == 0:
-                    logger.success(f"\u2714 {good} engines deemed '{qry}' as harmless\n")  # nopep8
-                else:
-                    logger.info(f"{bad} engines deemed '{qry}' as malicious\n")
+                        logger.info(f"{bad} engines deemed '{qry}' as malicious\n")
