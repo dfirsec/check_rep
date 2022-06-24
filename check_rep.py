@@ -14,7 +14,7 @@ from core.utils import DOMAIN, EMAIL, IP, NET, URL, Workers, logger
 from core.vt_check import VirusTotalChk
 
 __author__ = "DFIRSec (@pulsecode)"
-__version__ = "2.1"
+__version__ = "2.2"
 __description__ = "Check IP or Domain reputation against 400+ open-source Blacklists."
 
 # ---[ Initialize Colorama ]---
@@ -61,7 +61,6 @@ def argparser():
 
 
 def multi_map_arg(arg):
-    # print(colored.stylize("\n--[ Processing Geolocation Map ]--", colored.attr("bold")))
     multi_map(input_file=arg)
     print(colored.stylize("\n--[ GeoIP Map File ]--", colored.attr("bold")))
     try:
@@ -73,8 +72,12 @@ def multi_map_arg(arg):
     sys.exit(1)
 
 
-def vt_arg(arg, vt_config, workers):
+def vt_arg(arg, settings, workers):
     print(colored.stylize("\n--[ VirusTotal Detections ]--", colored.attr("bold")))
+
+    with open(settings, encoding="utf-8") as api:
+        vt_config = yaml.load(api)
+
     if not vt_config["VIRUS-TOTAL"]["api_key"]:
         logger.warning("Please add VirusTotal API key to the 'settings.yml' file, or add it below")
         user_vt_key = input("Enter key: ")
@@ -123,7 +126,8 @@ def geomap_output():
         logger.info(f"> Geolocation map file created: {ip_map_file} [{ip_map_timestamp.strftime(time_format)}]\n")
 
 
-def main(config):
+def main(settings):
+
     # Parse the arguments from the command line.
     args = argparser()[0]
     parser = argparser()[1]
@@ -149,7 +153,7 @@ def main(config):
         multi_map_arg(arg=args.mx[0])
 
     if args.vt:
-        vt_arg(query, config, workers)
+        vt_arg(query, settings, workers)
 
     if DOMAIN.findall(query) and not EMAIL.findall(query):
         domain_arg(workers, query)
@@ -212,14 +216,11 @@ if __name__ == "__main__":
     # Example: api_key: 23efd1000l3eh444f34l0000kfe56kec0
 
     VIRUS-TOTAL:
-    api_key:
+        api_key:
     """
-    if not settings.exists():
 
+    if not settings.exists():
         with open(settings, "w", encoding="utf-8") as fileobj:
             fileobj.writelines(TEXT)
 
-    with open(settings, encoding="utf-8") as api:
-        settings_config = yaml.load(api)
-
-    main(settings_config)
+    main(settings)
