@@ -188,7 +188,8 @@ class Workers:
         try:
             req = requests.get(blacklist, headers=helpers.headers(), timeout=3)
             req.encoding = "utf-8"
-            if match := re.findall(self.query, req.text):
+            match = re.findall(self.query, req.text)
+            if match:
                 logger.warning(f"\u2716  {self.query} --> {blacklist}")
                 self.bl_matches += 1
         except AddressValueError as err:
