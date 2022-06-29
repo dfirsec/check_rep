@@ -204,8 +204,8 @@ if __name__ == "__main__":
     print("Check IP and Domain Reputation")
 
     # ---[ Python v3.7+ check ]---
-    if sys.version_info[0] == 3 and sys.version_info[1] <= 7:
-        sys.exit("\n[x] Please use python version 3.7 or higher.\n")
+    if sys.version_info[0] == 3 and sys.version_info[1] <= 8:
+        sys.exit("\n[x] Please use python version 3.8 or higher.\n")
 
     # ---[ Configuration Parser ]---
     yaml = YAML()
