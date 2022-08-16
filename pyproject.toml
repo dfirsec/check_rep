@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "check_rep"
+version = "2.2.0"
+description = "Check IP or Domain reputation against 400+ open-source Blacklists"
+authors = ["Mitch Haddadi <12067255+dfirsec@users.noreply.github.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+aiodns = "^3.0.0"
+asyncwhois = "^1.0.1"
+colorama = "^0.4.5"
+colored = "^1.4.3"
+coloredlogs = "^15.0.1"
+dnspython = "^2.2.1"
+folium = "^0.12.1"
+geoip2 = "^4.6.0"
+"ruamel.yaml" = "^0.17.21"
+simplejson = "^3.17.6"
+tldextract = "^3.3.1"
+tqdm = "^4.64.0"
+verboselogs = "^1.7"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
