@@ -14,7 +14,7 @@ from core.utils import DOMAIN, EMAIL, IP, NET, URL, Workers, logger
 from core.vt_check import VirusTotalChk
 
 __author__ = "DFIRSec (@pulsecode)"
-__version__ = "2.2"
+__version__ = "2.2.0"
 __description__ = "Check IP or Domain reputation against 400+ open-source Blacklists."
 
 # ---[ Initialize Colorama ]---
