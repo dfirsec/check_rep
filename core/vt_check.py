@@ -45,8 +45,7 @@ class VirusTotalChk:
     def vt_run(self, scan_type, qry):
         url = f"{self.base_url}/{scan_type}/{qry}"
         data = json.dumps(self.vt_connect(url))
-        json_resp = json.loads(data)
-        if json_resp:
+        if json_resp := json.loads(data):
             good = 0
             bad = 0
             try:
